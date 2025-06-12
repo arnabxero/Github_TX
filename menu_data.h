@@ -1,5 +1,7 @@
+// ===== 2. menu_data.h (MODIFIED - Add MENU_RADIO_TEST to enum) =====
+
 /*
-  menu_data.h - Data Structures and EEPROM Storage (FIXED LED SETTINGS VERSION)
+  menu_data.h - Data Structures and EEPROM Storage (UPDATED WITH RADIO TEST)
   RC Transmitter for Arduino Mega
 */
 
@@ -9,7 +11,7 @@
 #include <EEPROM.h>
 #include "config.h"
 
-// Menu states
+// Menu states - UPDATED: Added MENU_RADIO_TEST
 enum MenuState {
   MENU_HIDDEN,
   MENU_MAIN,
@@ -24,12 +26,13 @@ enum MenuState {
   MENU_LED_COLOR_SETTING,
   MENU_RADIO_ADDRESS,
   MENU_FAILSAFE_SETTINGS,
-  MENU_FAILSAFE_THROTTLE_SETTING,  // New
-  MENU_FAILSAFE_STEERING_SETTING,  // New
+  MENU_FAILSAFE_THROTTLE_SETTING,
+  MENU_FAILSAFE_STEERING_SETTING,
   MENU_CHANNEL_SETTINGS,
   MENU_INFO,
   MENU_CAL_IN_PROGRESS,
-  MENU_CANCEL_CONFIRM
+  MENU_CANCEL_CONFIRM,
+  MENU_RADIO_TEST  // ADDED: New menu state for radio test
 };
 
 // LED Color modes
