@@ -1,5 +1,5 @@
 /*
-  menu.h - Core Menu System (UPDATED WITH RADIO TEST)
+  menu.h - Core Menu System (UPDATED - SIMPLE OK PRESS VERSION)
   RC Transmitter for Arduino Mega
 */
 
@@ -13,7 +13,6 @@
 #include "menu_display.h"
 #include "menu_settings.h"
 #include "menu_calibration.h"
-#include "radio_test.h"  // ADDED: Include radio test
 
 // Menu navigation variables - declare extern where used in other files
 MenuState currentMenu = MENU_HIDDEN;
@@ -59,7 +58,6 @@ void initMenu() {
   initMenuData();
   initMenuSettings();
   initMenuCalibration();
-  initRadioTest();  // ADDED: Initialize radio test
   
   Serial.println("Menu system initialized!");
 }
@@ -91,8 +89,8 @@ void updateMenu() {
         enterMenu();
         Serial.println("OK pressed from homepage - entering menu");
         lastNavigation = millis();
-      } else if (!isSettingActive() && !isCalibrationActive() && !isRadioTestActive()) {
-        // Only handle menu selection if we're not in setting, calibration, or radio test mode
+      } else if (!isSettingActive() && !isCalibrationActive()) {
+        // Only handle menu selection if we're not in setting or calibration mode
         // In those modes, let their respective handlers deal with OK button
         if (!isInSettingLockout()) {
           selectMenuItem();
@@ -102,8 +100,8 @@ void updateMenu() {
         }
         lastNavigation = millis();
       }
-      // If we're in setting, calibration, or radio test mode, don't handle OK here - 
-      // let updateMenuSettings(), updateMenuCalibration(), or updateRadioTest() handle it
+      // If we're in setting or calibration mode, don't handle OK here - 
+      // let updateMenuSettings() or updateMenuCalibration() handle it
     }
   }
   
@@ -111,10 +109,8 @@ void updateMenu() {
   
   // Handle different subsystem updates
   if (currentMenu != MENU_HIDDEN) {
-    // Update appropriate subsystem - UPDATED: Added radio test handling
-    if (isRadioTestActive()) {
-      updateRadioTest();
-    } else if (isCalibrationActive()) {
+    // Update appropriate subsystem
+    if (isCalibrationActive()) {
       updateMenuCalibration();
     } else if (isSettingActive()) {
       updateMenuSettings();
@@ -125,8 +121,8 @@ void updateMenu() {
       }
     }
     
-    // Auto-exit menu after 30 seconds of inactivity (except during radio test)
-    if (!isRadioTestActive() && millis() - menuTimer > 30000) {
+    // Auto-exit menu after 30 seconds of inactivity
+    if (millis() - menuTimer > 30000) {
       exitMenu();
     }
   }
@@ -229,7 +225,6 @@ void exitMenu() {
   menuActive = false;
   exitMenuCalibration();
   exitMenuSettings();
-  exitRadioTest();  // ADDED: Exit radio test
   cancelConfirmActive = false;
   menuSelection = 0;
   menuOffset = 0;
@@ -307,9 +302,6 @@ void selectMenuItem() {
           currentMenu = MENU_INFO;
           maxMenuItems = 3;
           break;
-        case 3: // Radio Test - ADDED
-          startRadioTest();
-          return;
         case 6: // Exit
           exitMenu();
           return;
@@ -365,7 +357,7 @@ void selectMenuItem() {
         case 4: startSetting("CHANNEL"); return;
         case 5: 
           currentMenu = MENU_FAILSAFE_SETTINGS; 
-          maxMenuItems = 4;
+          maxMenuItems = 4; // Updated to 4 since we removed test failsafe
           break;
         case 6: resetAllSettings(); break;
         case 7: goBack(); return;
@@ -379,7 +371,7 @@ void selectMenuItem() {
       
     case MENU_FAILSAFE_SETTINGS:
       handleFailsafeSettingsSelection(menuSelection);
-      if (menuSelection == 3) goBack(); // Back option
+      if (menuSelection == 3) goBack(); // Back option (now index 3 instead of 4)
       return;
       
     case MENU_INFO:
@@ -410,8 +402,6 @@ void drawMenu() {
     drawSettingSaveScreen();
   } else if (cancelConfirmActive) {
     drawCancelConfirmation();
-  } else if (isRadioTestActive()) {  // ADDED: Radio test display
-    drawRadioTest();
   } else if (isCalibrationActive()) {
     drawMenuCalibration();
   } else if (isSettingActive()) {
