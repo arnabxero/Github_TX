@@ -1,5 +1,5 @@
 /*
-  menu.h - Core Menu System (FIXED VERSION WITH SETTING LOCKOUT)
+  menu.h - Core Menu System (UPDATED - SIMPLE OK PRESS VERSION)
   RC Transmitter for Arduino Mega
 */
 
@@ -23,8 +23,6 @@ int maxMenuItems = 0;
 int maxVisibleItems = 4;
 bool menuActive = false;
 unsigned long menuTimer = 0;
-unsigned long okButtonPressTime = 0;
-bool okButtonLongPressed = false;
 bool lastOkButtonState = false;
 
 // Navigation timing
@@ -79,29 +77,32 @@ void updateMenu() {
     }
   }
   
-  // Check for OK button long press (2 seconds)
+  // UPDATED: Simple OK button press handling (no long press required)
   bool currentOkState = buttons.btnOK;
   
+  // Rising edge detection for OK button - but only handle it if we're not in special modes
   if (currentOkState && !lastOkButtonState) {
-    okButtonPressTime = millis();
-    okButtonLongPressed = false;
-  } else if (currentOkState && !okButtonLongPressed) {
-    if (millis() - okButtonPressTime >= 2000) {
-      okButtonLongPressed = true;
+    // Add debounce protection
+    if (millis() - lastNavigation > NAV_DEBOUNCE) {
       if (currentMenu == MENU_HIDDEN) {
+        // Simple press from homepage - enter menu immediately
         enterMenu();
+        Serial.println("OK pressed from homepage - entering menu");
+        lastNavigation = millis();
+      } else if (!isSettingActive() && !isCalibrationActive()) {
+        // Only handle menu selection if we're not in setting or calibration mode
+        // In those modes, let their respective handlers deal with OK button
+        if (!isInSettingLockout()) {
+          selectMenuItem();
+          Serial.println("OK pressed in menu - selecting item");
+        } else {
+          Serial.println("Menu selection blocked - setting lockout active");
+        }
+        lastNavigation = millis();
       }
+      // If we're in setting or calibration mode, don't handle OK here - 
+      // let updateMenuSettings() or updateMenuCalibration() handle it
     }
-  } else if (!currentOkState && lastOkButtonState) {
-    if (!okButtonLongPressed && currentMenu != MENU_HIDDEN) {
-      // CRITICAL FIX: Check if we're in setting lockout before allowing menu selection
-      if (!isInSettingLockout()) {
-        selectMenuItem();
-      } else {
-        Serial.println("Menu selection blocked - setting lockout active");
-      }
-    }
-    okButtonLongPressed = false;
   }
   
   lastOkButtonState = currentOkState;
